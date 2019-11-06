@@ -43,3 +43,7 @@ co(function *() {
 目标是将现有的taro或者vue小程序项目 直接flutter跑起来
 可以使用小程序方式来做热更新
 ```
+
+# fluter ui 组件库介绍
+[rlstyles](https://github.com/fangkyi03/rlstyle.git)
+里面有详细的参数说明
