@@ -5,6 +5,8 @@ const PSD = require('psd')
 const co = require('co')
 const FormData = require('form-data')
 const tranFormFlutter = require('./tranFlutter').tranForm
+const tranFormWeb = require('./tranformWeb').tranformWeb
+const tranformTaro = require('./tranformTaro').tranformTaro
 const qs = require('qs');
 const { execSync } = require('child_process');
 
@@ -12,17 +14,26 @@ var mScanDirectory = '';
 var mOutDirectory = {};
 
 var mImgUpload = 'https://imgcook.taobao.org/api/upload-img?ctoken=a69pmX6U-748x5IceepDgaBvKIeGn_jSEgvc&img2code'
-var mImageScan = 'https://imgcook.taobao.org/api/img2json-next?image='
-var mImageEnd = 'https://imgcook.taobao.org/api/img2json-next?image='
+var mImageScan = 'https://imgcook.taobao.org/api/img2json-next'
+var mImageEnd = 'https://imgcook.taobao.org/api/img2json-next'
 var mLayoutProcess = 'https://imgcook.taobao.org/api/gen-layout-process'
 
 var mScanList = [];
 var mPostUrl = [];
 var mPostJson = [];
 
-function init(scanDirectory,outDirectory = {web:'',taro:'',flutter:''}) {
+var mCtoken = '';
+var mCookie = '';
+
+var mNameList = [];
+function init({ scanDirectory, outDirectory = { web: '', taro: '', flutter: '' }, ctoken,cookie}) {
     mScanDirectory = scanDirectory
     mOutDirectory = outDirectory
+    mCookie = cookie
+    mCtoken = ctoken
+    if (!ctoken || !cookie) {
+        throw new 'ctoken货cookie不能为空';
+    }
 }
 
 function savepsd (fileDir) {
@@ -62,7 +73,6 @@ function *scanFile(filePath) {
 function scan() {
     return co(function*(){
         yield scanFile(mScanDirectory);
-        console.log('输出图片', mScanList)
     })
 }
 
@@ -90,7 +100,16 @@ function uploadImage(filePath) {
 
 function startScan (url) {
     return new Promise((resolve, reject) => {
-        axios.get(mImageScan + url)
+        const config = {
+            headers:{
+                cookie: mCookie
+            }
+        }
+        const data = {
+            'image': url,
+            'ctoken':mCtoken
+        }
+        axios.post(mImageScan,qs.stringify(data),config)
         .then((e) => {
             if (e.data && e.data.data && e.data.data.taskParam.taskId) {
                 resolve(e.data.data.taskParam.taskId)
@@ -104,8 +123,18 @@ function startScan (url) {
 function endScan (url,taskId) {
     let time;
     return new Promise((resolve, reject) => {
-       time = setInterval(()=>{
-        axios.get(mImageEnd + url + '&taskId=' + taskId)
+        const config = {
+            headers: {
+                cookie: mCookie
+            }
+        }
+        const data = {
+            'image': url,
+            'ctoken': mCtoken,
+            'taskId': taskId
+        }
+        time = setInterval(()=>{
+        axios.post(mImageEnd,qs.stringify(data),config)
         .then((e) => {
             if (e.data && e.data.data && e.data.data.result) {
                 resolve(e.data.data.result);
@@ -123,14 +152,14 @@ function tranJson(url,json) {
         original_pic: url,
         options: JSON.stringify({ "useThreshold": true, "combineCols": true, "composeText": true, "adaptSpace": true, "composeRepeat": true, "dirtyFilter": true, "checkUseless": false, "checkShape": false }),
         levelProcess: 1,
-        ctoken:'C1bKhV8I-O39uA0KR6-T-T2cux8QfCjh_gXc'
+        ctoken:mCtoken
     }
     return new Promise((resolve, reject) => {
       axios(mLayoutProcess,{
           method:'POST',
           data: qs.stringify(obj),
           headers: {
-            'cookie':'EGG_SESS_DAVINCI=B8G5XPvkjePB-ITpJ2Se0cJV9OMYPrHlX5Fuhegay2no3dOgxCvP64pvvBdgz7RuiTUY-6J8pvoDPvvXeAaNoPvCoJu9SVyzOdox7N8cqkM=; cna=NIk8Fm52VmUCASe5dnDfPW3z; ctoken=d6z1_WxDBKu-rGDUXhunoTYx; isg=BEVFuyGVtHI58pCtLG482FP5VIe_pfzRnCCmzUeqD3yL3mRQDlEOZSbw7EqNnhFM',
+            'cookie':mCookie
           }
       })
       .then((e)=>{
@@ -153,25 +182,75 @@ function post() {
             const filePath = mScanList[index];
             const url = yield uploadImage(filePath)
             const json = yield getImageJson(url)
+            console.log('图片总计:' + mScanList.length + '当前上传完成:' + index)
             if (url) {
                 mPostUrl.push(url)
                 mPostJson.push(json)
+                mNameList.push(getFileName(filePath))
             }
         }
     })
 }
 
 function buildFlutter () {
-    for (let index = 0; index < mPostJson.length; index++) {
-        const json = mPostJson[index];
-        tranFormFlutter(json, path.resolve('./index.dart'))
-        execSync('flutter format ' + path.resolve('./index.dart'))
-    }
+    return new Promise((resolve, reject) => {
+        for (let index = 0; index < mPostJson.length; index++) {
+            const json = mPostJson[index];
+            const outDir = path.join(mOutDirectory['flutter'], mNameList[index])
+            const outFile = path.join(outDir, './index.dart')
+            console.log('当前flutter完成' + index)
+            if (fs.existsSync(outDir)) {
+                tranFormFlutter(json, outFile)
+                execSync('flutter format ' + outFile)
+            } else {
+                fs.mkdirSync(outDir)
+                tranFormFlutter(json, outFile)
+                execSync('flutter format ' + outFile)
+            }
+        }
+        resolve()
+    })
+}
+
+function buildWeb () {
+    return new Promise((resolve, reject) => {
+        for (let index = 0; index < mPostJson.length; index++) {
+            const json = mPostJson[index];
+            const outDir = path.join(mOutDirectory['web'], mNameList[index])
+            console.log('当前web完成' + index)
+            if (fs.existsSync(outDir)) {
+                tranFormWeb(json, outDir)
+            } else {
+                fs.mkdirSync(outDir)
+                tranFormFlutter(json, outDir)
+            }
+        }
+        resolve()
+    })
+}
+
+function buildTaro() {
+    return new Promise((resolve, reject) => {
+        for (let index = 0; index < mPostJson.length; index++) {
+            const json = mPostJson[index];
+            const outDir = path.join(mOutDirectory['taro'], mNameList[index])
+            console.log('当前taro完成' + index)
+            if (fs.existsSync(outDir)) {
+                tranformTaro(json, outDir)
+            } else {
+                fs.mkdirSync(outDir)
+                tranformTaro(json, outDir)
+            }
+        }
+        resolve()
+    })
 }
 
 module.exports = {
     init,
     scan,
     post,
-    buildFlutter
+    buildFlutter,
+    buildWeb,
+    buildTaro
 }

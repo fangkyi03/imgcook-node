@@ -21,16 +21,16 @@ class _TestState extends State<TestView> {
 const Map<String, Styles> styles = {
   "block": Styles(
     display: "flex",
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
-    justifyContent: "center",
+    borderRadius: 165,
     backgroundColor: "#000000",
     width: 750,
     height: 750,
     overflowY: "scroll",
   ),
   "largeItem": Styles(
-    width: 562,
-    height: 562,
+    width: 750,
+    height: 750,
   ),
 };

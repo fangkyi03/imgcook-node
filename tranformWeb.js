@@ -1,5 +1,4 @@
 const fs = require('fs')
-const json = require('./test.json')
 const prettier = require("prettier");
 var beautify_css = require('js-beautify').css;
 const path = require('path')
