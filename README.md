@@ -16,9 +16,9 @@ imgNode.init({
         'web': path.resolve('./'),
         'taro': path.resolve('./'),
     },
-    // 请在这里输入自己的imgcook token与cookie
-    'ctoken':'',
-    'cookie':''
+    // 内置了token与cookie 如果cookie过期 请填入自己的cookie
+    // 'ctoken':'',
+    // 'cookie':''
 })
 co(function *() {
     yield imgNode.scan()

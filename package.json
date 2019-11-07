@@ -1,6 +1,6 @@
 {
   "name": "imgcook-node",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "支持jpg,png,psd等图片格式 可以将imgCook的json数据转换为web,taro,flutter",
   "main": "index.js",
   "scripts": {

@@ -22,17 +22,16 @@ var mScanList = [];
 var mPostUrl = [];
 var mPostJson = [];
 
-var mCtoken = '';
-var mCookie = '';
+var mCtoken = 'Y5OuW5iN-wwc-6BiL1K_5o4iQUjE_RNESr50';
+var mCookie = 'EGG_SESS_DAVINCI=B8G5XPvkjePB-ITpJ2Se0cJV9OMYPrHlX5Fuhegay2nQ2V-hLqunk-sSfyky3kNyJxevM4z2HNctA0IwjU6C5u7gv08mbfhEgTLHOGThnDQ=; cna=v+BJFiJ16jkCASe8LnIZR/Tq; ctoken=7G-rmtmpHGk_GlBWbno5xfC6; isg=BNnZ9oFX4ItJPLwemf4v-fPm6MOzZs0YiD8PXvuOcoB_AviUQrQx6aBUAI7RumVQ';
 
 var mNameList = [];
 function init({ scanDirectory, outDirectory = { web: '', taro: '', flutter: '' }, ctoken,cookie}) {
     mScanDirectory = scanDirectory
     mOutDirectory = outDirectory
-    mCookie = cookie
-    mCtoken = ctoken
-    if (!ctoken || !cookie) {
-        throw new 'ctoken或cookie不能为空';
+    if (!(!ctoken || !cookie)) {
+        mCookie = cookie
+        mCtoken = ctoken
     }
 }
 
@@ -222,7 +221,7 @@ function buildWeb () {
                 tranFormWeb(json, outDir)
             } else {
                 fs.mkdirSync(outDir)
-                tranFormFlutter(json, outDir)
+                tranFormWeb(json, outDir)
             }
         }
         resolve()
