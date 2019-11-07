@@ -32,7 +32,7 @@ function init({ scanDirectory, outDirectory = { web: '', taro: '', flutter: '' }
     mCookie = cookie
     mCtoken = ctoken
     if (!ctoken || !cookie) {
-        throw new 'ctoken货cookie不能为空';
+        throw new 'ctoken或cookie不能为空';
     }
 }
 
