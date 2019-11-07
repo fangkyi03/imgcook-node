@@ -1,4 +1,4 @@
-const imgNode = require('./index')
+const imgNode = require('imgcook-node')
 const path = require('path')
 const co = require('co')
 
