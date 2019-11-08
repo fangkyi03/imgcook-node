@@ -86,10 +86,13 @@ function read(json, index) {
         case 'Repeat':
         case 'Shape':
         case 'Block':
+        case 'shape':
             return createDiv(json.attrs, json.style, json.artboardImg, index)(getChildren(json, index), json.children, json.attrs)
         case "Image":
+        case 'image':
             return createImage(json.attrs, json.style, index)(getChildren(json))
         case 'Text':
+        case 'text':    
             return createText(json.attrs, json.style, index)(getChildren(json))
         default:
             return createDiv(json.attrs, json.style, index)(getChildren(json))
